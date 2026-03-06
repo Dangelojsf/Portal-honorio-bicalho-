@@ -1,0 +1,13 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#F3F7F4"/>
+  <rect width="1200" height="280" fill="#E4F1F8"/>
+  <path d="M0 440L120 380L280 450L470 320L710 470L900 330L1060 410L1200 350V900H0V440Z" fill="#90C098"/>
+  <path d="M0 560L160 470L290 540L500 440L720 620L900 500L1080 600L1200 510V900H0V560Z" fill="#2D7049"/>
+  <rect x="180" y="450" width="240" height="200" rx="18" fill="#F9F2E8"/>
+  <rect x="470" y="400" width="240" height="250" rx="18" fill="#FFF7EE"/>
+  <rect x="760" y="470" width="230" height="180" rx="18" fill="#F7ECDC"/>
+  <rect x="220" y="500" width="70" height="70" rx="12" fill="#F59E0B"/>
+  <rect x="560" y="465" width="60" height="60" rx="12" fill="#1F6F4A"/>
+  <rect x="820" y="520" width="90" height="30" rx="10" fill="#C98A54"/>
+  <text x="90" y="150" fill="#134B32" font-size="48" font-family="Arial, sans-serif" font-weight="700">Guia comercial</text>
+</svg>

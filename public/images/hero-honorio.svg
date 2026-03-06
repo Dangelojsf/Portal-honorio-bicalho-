@@ -1,0 +1,25 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="1100" fill="#E8F0EB"/>
+  <rect y="60" width="1600" height="300" fill="url(#sky)"/>
+  <path d="M0 430L180 280L320 360L520 210L760 360L980 170L1240 350L1420 260L1600 370V1100H0V430Z" fill="#88B98E"/>
+  <path d="M0 520L180 430L360 520L540 350L790 520L980 340L1230 500L1440 420L1600 500V1100H0V520Z" fill="#4F8759"/>
+  <path d="M0 650L140 560L300 640L520 520L780 700L980 530L1200 640L1380 560L1600 670V1100H0V650Z" fill="#1F6F4A"/>
+  <rect x="900" y="500" width="260" height="190" rx="12" fill="#F8EFE1"/>
+  <rect x="980" y="350" width="76" height="150" rx="10" fill="#F8EFE1"/>
+  <rect x="1005" y="300" width="26" height="50" fill="#D6C3A6"/>
+  <path d="M980 350L1018 285L1056 350H980Z" fill="#C7895A"/>
+  <rect x="1010" y="390" width="16" height="24" rx="3" fill="#D6C3A6"/>
+  <rect x="1032" y="390" width="16" height="24" rx="3" fill="#D6C3A6"/>
+  <path d="M900 500L1030 430L1160 500H900Z" fill="#C7895A"/>
+  <rect x="1015" y="560" width="35" height="80" rx="8" fill="#7D4B34"/>
+  <rect x="70" y="80" width="250" height="84" rx="24" fill="#134B32" fill-opacity="0.86"/>
+  <text x="115" y="130" fill="white" font-size="42" font-family="Arial, sans-serif" font-weight="700">Portal</text>
+  <text x="115" y="170" fill="white" font-size="52" font-family="Arial, sans-serif" font-weight="700">Honorio Bicalho</text>
+  <circle cx="1260" cy="150" r="54" fill="#F59E0B" fill-opacity="0.85"/>
+  <defs>
+    <linearGradient id="sky" x1="800" y1="60" x2="800" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A7D1F4"/>
+      <stop offset="1" stop-color="#DFF1FB"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,16 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#EEF4F0"/>
+  <rect y="80" width="1200" height="280" fill="url(#paint0_linear)"/>
+  <path d="M0 470L120 380L300 470L480 320L660 430L860 280L1040 430L1200 350V900H0V470Z" fill="#82B488"/>
+  <path d="M0 560L140 500L300 560L480 430L720 590L900 460L1090 560L1200 510V900H0V560Z" fill="#2D7049"/>
+  <rect x="150" y="520" width="320" height="180" rx="18" fill="#F7F0E6"/>
+  <rect x="520" y="470" width="220" height="230" rx="18" fill="#F7F0E6"/>
+  <rect x="800" y="520" width="260" height="180" rx="18" fill="#F7F0E6"/>
+  <text x="90" y="150" fill="#134B32" font-size="48" font-family="Arial, sans-serif" font-weight="700">Noticias locais</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="600" y1="80" x2="600" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A9D4F2"/>
+      <stop offset="1" stop-color="#DDEFF9"/>
+    </linearGradient>
+  </defs>
+</svg>

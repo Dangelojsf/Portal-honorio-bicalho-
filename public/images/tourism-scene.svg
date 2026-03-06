@@ -1,0 +1,10 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#EFF6F2"/>
+  <rect width="1200" height="260" fill="#D9EFFA"/>
+  <circle cx="960" cy="150" r="56" fill="#F59E0B"/>
+  <path d="M0 420L150 320L300 420L500 240L760 430L960 230L1200 410V900H0V420Z" fill="#6FAE78"/>
+  <path d="M0 540L140 450L300 550L480 430L720 610L900 500L1080 620L1200 560V900H0V540Z" fill="#1F6F4A"/>
+  <path d="M700 560C730 470 830 440 880 510C915 555 905 640 860 680C820 715 770 725 720 700C670 675 675 610 700 560Z" fill="#A8D5F2"/>
+  <path d="M210 610C240 520 330 500 400 560C470 620 470 740 380 775C290 810 180 745 210 610Z" fill="#A8D5F2"/>
+  <text x="90" y="150" fill="#134B32" font-size="48" font-family="Arial, sans-serif" font-weight="700">Turismo e trilhas</text>
+</svg>

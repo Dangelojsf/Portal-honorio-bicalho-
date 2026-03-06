@@ -1,0 +1,12 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#F5F7F6"/>
+  <rect x="40" y="40" width="1120" height="550" rx="34" fill="#134B32"/>
+  <path d="M40 410L170 320L320 380L470 250L660 390L830 220L980 330L1160 260V590H40V410Z" fill="#2E7A55"/>
+  <path d="M40 460L180 390L310 450L470 340L660 470L860 320L1010 420L1160 360V590H40V460Z" fill="#7FB986"/>
+  <circle cx="980" cy="150" r="54" fill="#F59E0B"/>
+  <rect x="760" y="310" width="180" height="132" rx="10" fill="#F7F0E7"/>
+  <rect x="818" y="206" width="52" height="104" rx="8" fill="#F7F0E7"/>
+  <path d="M818 206L844 162L870 206H818Z" fill="#C98A54"/>
+  <text x="96" y="200" fill="white" font-size="74" font-family="Arial, sans-serif" font-weight="700">Portal Honorio Bicalho</text>
+  <text x="96" y="276" fill="#D6E9DA" font-size="34" font-family="Arial, sans-serif">Noticias, turismo e guia do bairro</text>
+</svg>

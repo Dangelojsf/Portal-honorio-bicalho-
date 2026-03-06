@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(cuid())
+  name         String
+  email        String          @unique
+  passwordHash String
+  role         UserRole        @default(RESIDENT)
+  image        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  posts        CommunityPost[]
+}
+
+model Category {
+  id             String          @id
+  name           String
+  slug           String
+  type           CategoryType
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  news           News[]
+  businesses     Business[]
+  communityPosts CommunityPost[]
+
+  @@unique([slug, type])
+}
+
+model News {
+  id          String    @id
+  title       String
+  slug        String    @unique
+  content     String    @db.Text
+  image       String
+  author      String
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Event {
+  id          String   @id
+  title       String
+  description String   @db.Text
+  date        DateTime
+  time        String
+  location    String
+  image       String
+  organizer   String
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Business {
+  id          String    @id
+  name        String
+  slug        String    @unique
+  description String    @db.Text
+  address     String
+  phone       String
+  website     String?
+  instagram   String?
+  latitude    Float?
+  longitude   Float?
+  images      String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+}
+
+model TourismSpot {
+  id          String      @id
+  name        String
+  slug        String      @unique
+  description String      @db.Text
+  type        TourismType
+  difficulty  String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  image       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model CommunityPost {
+  id          String           @id
+  title       String
+  content     String           @db.Text
+  authorName  String
+  authorEmail String?
+  status      ModerationStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  categoryId  String?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  authorId    String?
+  author      User?            @relation(fields: [authorId], references: [id])
+}
+
+model SiteSettings {
+  id                 String   @id
+  heroTitle          String
+  heroSubtitle       String   @db.Text
+  heroImage          String
+  seoImage           String
+  historyTitle       String
+  historyDescription String   @db.Text
+  historyImage       String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+enum UserRole {
+  VISITOR
+  RESIDENT
+  BUSINESS
+  ADMIN
+}
+
+enum CategoryType {
+  NEWS
+  BUSINESS
+  COMMUNITY
+}
+
+enum TourismType {
+  TRILHAS
+  CACHOEIRAS
+  MIRANTES
+  HISTORICO
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
