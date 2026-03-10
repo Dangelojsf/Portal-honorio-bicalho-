@@ -48,8 +48,30 @@ function categoriesByType(
   return categories.filter((item) => item.type === type);
 }
 
+function isNextControlFlowError(error: unknown) {
+  if (!error || typeof error !== "object" || !("digest" in error)) {
+    return false;
+  }
+
+  const digest = typeof error.digest === "string" ? error.digest : "";
+  return (
+    digest === "DYNAMIC_SERVER_USAGE" ||
+    digest === "NEXT_NOT_FOUND" ||
+    digest.startsWith("NEXT_REDIRECT;") ||
+    digest.startsWith("NEXT_HTTP_ERROR_FALLBACK;")
+  );
+}
+
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions).catch((error) => {
+    if (isNextControlFlowError(error)) {
+      throw error;
+    }
+
+    console.error("[admin] Falha ao recuperar sessao:", error);
+    return null;
+  });
+
   const isAdmin = session?.user.role === "admin";
   const canAccessAdmin = session?.user && (session.user.role === "admin" || session.user.role === "moderator");
 
@@ -57,9 +79,32 @@ export default async function AdminPage() {
     redirect("/login?callbackUrl=/admin");
   }
 
-  const snapshot = await getAdminSnapshot();
-  const moderators = isAdmin ? await getModeratorUsers() : [];
-  const auditLogs = isAdmin ? await getAuditLogs(60) : [];
+  const snapshotPromise = getAdminSnapshot();
+  const moderatorsPromise = isAdmin ? getModeratorUsers() : Promise.resolve([] as PortalUser[]);
+  const auditLogsPromise = isAdmin ? getAuditLogs(60) : Promise.resolve([] as PortalAuditLog[]);
+
+  const [snapshotResult, moderatorsResult, auditLogsResult] = await Promise.allSettled([
+    snapshotPromise,
+    moderatorsPromise,
+    auditLogsPromise
+  ]);
+
+  if (snapshotResult.status !== "fulfilled") {
+    console.error("[admin] Falha ao carregar snapshot administrativo:", snapshotResult.reason);
+    throw new Error("Nao foi possivel carregar o painel administrativo.");
+  }
+
+  if (moderatorsResult.status !== "fulfilled") {
+    console.error("[admin] Falha ao carregar moderadores:", moderatorsResult.reason);
+  }
+
+  if (auditLogsResult.status !== "fulfilled") {
+    console.error("[admin] Falha ao carregar historico:", auditLogsResult.reason);
+  }
+
+  const snapshot = snapshotResult.value;
+  const moderators = moderatorsResult.status === "fulfilled" ? moderatorsResult.value : [];
+  const auditLogs = auditLogsResult.status === "fulfilled" ? auditLogsResult.value : [];
   const newsCategories = categoriesByType(snapshot.categories, "news");
   const businessCategories = categoriesByType(snapshot.categories, "business");
   const metrics = isAdmin
