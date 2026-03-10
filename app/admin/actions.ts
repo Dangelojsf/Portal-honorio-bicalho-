@@ -116,7 +116,7 @@ export async function saveNewsAction(formData: FormData) {
       category: saved.category?.name ?? null
     }
   });
-  revalidatePortal(["/", "/news", "/admin"]);
+  revalidatePortal(["/", "/news", "/admin", "/painel"]);
 }
 
 export async function deleteNewsAction(formData: FormData) {
@@ -132,7 +132,7 @@ export async function deleteNewsAction(formData: FormData) {
     action: "delete",
     summary: `${user.name} excluiu a noticia "${entityTitle}".`
   });
-  revalidatePortal(["/", "/news", "/admin"]);
+  revalidatePortal(["/", "/news", "/admin", "/painel"]);
 }
 
 export async function saveEventAction(formData: FormData) {
@@ -170,7 +170,7 @@ export async function saveEventAction(formData: FormData) {
       organizer: saved.organizer
     }
   });
-  revalidatePortal(["/", "/events", "/admin"]);
+  revalidatePortal(["/", "/events", "/admin", "/painel"]);
 }
 
 export async function deleteEventAction(formData: FormData) {
@@ -186,7 +186,7 @@ export async function deleteEventAction(formData: FormData) {
     action: "delete",
     summary: `${user.name} excluiu o evento "${entityTitle}".`
   });
-  revalidatePortal(["/", "/events", "/admin"]);
+  revalidatePortal(["/", "/events", "/admin", "/painel"]);
 }
 
 export async function saveBusinessAction(formData: FormData) {
@@ -226,7 +226,7 @@ export async function saveBusinessAction(formData: FormData) {
       category: saved.category?.name ?? null
     }
   });
-  revalidatePortal(["/", "/business-directory", "/admin"]);
+  revalidatePortal(["/", "/business-directory", "/admin", "/painel"]);
 }
 
 export async function deleteBusinessAction(formData: FormData) {
@@ -242,7 +242,7 @@ export async function deleteBusinessAction(formData: FormData) {
     action: "delete",
     summary: `${user.name} excluiu o negocio "${entityTitle}".`
   });
-  revalidatePortal(["/", "/business-directory", "/admin"]);
+  revalidatePortal(["/", "/business-directory", "/admin", "/painel"]);
 }
 
 export async function saveTourismSpotAction(formData: FormData) {
@@ -280,7 +280,7 @@ export async function saveTourismSpotAction(formData: FormData) {
       difficulty: saved.difficulty
     }
   });
-  revalidatePortal(["/", "/tourism", "/admin"]);
+  revalidatePortal(["/", "/tourism", "/admin", "/painel"]);
 }
 
 export async function deleteTourismSpotAction(formData: FormData) {
@@ -296,7 +296,7 @@ export async function deleteTourismSpotAction(formData: FormData) {
     action: "delete",
     summary: `${user.name} excluiu o ponto turistico "${entityTitle}".`
   });
-  revalidatePortal(["/", "/tourism", "/admin"]);
+  revalidatePortal(["/", "/tourism", "/admin", "/painel"]);
 }
 
 export async function approveCommunityPostAction(formData: FormData) {
@@ -313,7 +313,7 @@ export async function approveCommunityPostAction(formData: FormData) {
     summary: `${user.name} aprovou o post "${entityTitle}".`,
     afterData: { status: "approved" }
   });
-  revalidatePortal(["/", "/community", "/admin"]);
+  revalidatePortal(["/", "/community", "/admin", "/painel"]);
 }
 
 export async function rejectCommunityPostAction(formData: FormData) {
@@ -330,7 +330,7 @@ export async function rejectCommunityPostAction(formData: FormData) {
     summary: `${user.name} rejeitou o post "${entityTitle}".`,
     afterData: { status: "rejected" }
   });
-  revalidatePortal(["/community", "/admin"]);
+  revalidatePortal(["/community", "/admin", "/painel"]);
 }
 
 export async function deleteCommunityPostAction(formData: FormData) {
@@ -346,7 +346,7 @@ export async function deleteCommunityPostAction(formData: FormData) {
     action: "delete",
     summary: `${user.name} excluiu o post "${entityTitle}".`
   });
-  revalidatePortal(["/community", "/admin"]);
+  revalidatePortal(["/community", "/admin", "/painel"]);
 }
 
 export async function saveSiteSettingsAction(formData: FormData) {
@@ -379,7 +379,7 @@ export async function saveSiteSettingsAction(formData: FormData) {
       historyTitle: parsed.data.historyTitle
     }
   });
-  revalidatePortal(["/", "/history", "/admin"]);
+  revalidatePortal(["/", "/history", "/admin", "/painel"]);
 }
 
 export async function saveModeratorAction(formData: FormData) {
@@ -410,5 +410,6 @@ export async function saveModeratorAction(formData: FormData) {
       isActive: saved.isActive
     }
   });
-  revalidatePortal(["/admin"]);
+  revalidatePortal(["/admin", "/painel"]);
 }
+

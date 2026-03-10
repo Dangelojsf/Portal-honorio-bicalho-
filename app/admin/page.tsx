@@ -76,7 +76,7 @@ export default async function AdminPage() {
   const canAccessAdmin = session?.user && (session.user.role === "admin" || session.user.role === "moderator");
 
   if (!canAccessAdmin) {
-    redirect("/login?callbackUrl=/admin");
+    redirect("/login?callbackUrl=/painel");
   }
 
   const snapshotPromise = getAdminSnapshot();

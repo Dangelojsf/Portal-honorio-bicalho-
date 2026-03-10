@@ -39,12 +39,12 @@ export function SiteHeader() {
             </nav>
             <div className="hidden shrink-0 items-center gap-2 pl-4 lg:flex">
               <Button asChild variant="accent" size="sm" className="h-9 px-4">
-                <Link href="/admin">Login Adm</Link>
+                <Link href="/painel">Login Adm</Link>
               </Button>
             </div>
             <div className="ml-auto flex items-center gap-2 lg:hidden">
               <Button asChild variant="accent" size="sm" className="h-9 px-4">
-                <Link href="/admin">Login Adm</Link>
+                <Link href="/painel">Login Adm</Link>
               </Button>
               <Button
                 variant="ghost"

@@ -12,7 +12,7 @@ interface LoginFormProps {
   callbackUrl?: string;
 }
 
-export function LoginForm({ callbackUrl = "/admin" }: LoginFormProps) {
+export function LoginForm({ callbackUrl = "/painel" }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("admin@portalhonoriobicalho.com.br");
   const [password, setPassword] = useState("admin1234");
