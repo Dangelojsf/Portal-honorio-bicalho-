@@ -44,6 +44,7 @@ function clone<T>(value: T): T {
 }
 
 const storeFilePath = join(process.cwd(), "data", "portal-store.json");
+let hasWarnedPersistenceFailure = false;
 
 function createDefaultStore(): PortalStore {
   return {
@@ -87,8 +88,19 @@ function normalizeStore(value: Partial<PortalStore> | null | undefined): PortalS
 }
 
 function writeStoreToDisk(store: PortalStore) {
-  mkdirSync(dirname(storeFilePath), { recursive: true });
-  writeFileSync(storeFilePath, JSON.stringify(store, null, 2), "utf8");
+  try {
+    mkdirSync(dirname(storeFilePath), { recursive: true });
+    writeFileSync(storeFilePath, JSON.stringify(store, null, 2), "utf8");
+    return true;
+  } catch (error) {
+    if (!hasWarnedPersistenceFailure) {
+      hasWarnedPersistenceFailure = true;
+      console.warn("[mock-store] Persistencia em disco indisponivel. O fallback seguira apenas em memoria.");
+      console.warn(error);
+    }
+
+    return false;
+  }
 }
 
 function readStoreFromDisk() {
