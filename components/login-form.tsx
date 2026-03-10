@@ -24,22 +24,31 @@ export function LoginForm({ callbackUrl = "/painel" }: LoginFormProps) {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl
+      });
 
-    setLoading(false);
+      if (result?.error) {
+        setError("Nao foi possivel autenticar com essas credenciais.");
+        return;
+      }
 
-    if (result?.error) {
-      setError("Nao foi possivel autenticar com essas credenciais.");
-      return;
+      if (!result) {
+        setError("Falha ao conectar com o servidor de autenticacao.");
+        return;
+      }
+
+      router.push(callbackUrl);
+      router.refresh();
+    } catch {
+      setError("Falha ao conectar com o servidor de autenticacao.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push(callbackUrl);
-    router.refresh();
   }
 
   return (
