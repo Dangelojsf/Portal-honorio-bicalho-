@@ -45,7 +45,7 @@ export function LoginForm({ callbackUrl = "/admin" }: LoginFormProps) {
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <CardTitle>Acesso administrativo</CardTitle>
+        <CardTitle>Acesso da equipe</CardTitle>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>

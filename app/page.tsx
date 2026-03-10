@@ -164,7 +164,7 @@ export default async function HomePage() {
           </Card>
         </div>
 
-        <div className="space-y-8">
+        <div id="mapa-local" className="scroll-mt-24 space-y-8">
           <SectionHeading
             eyebrow="Mapa local"
             title="Explore Honorio Bicalho no mapa"

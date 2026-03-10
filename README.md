@@ -7,7 +7,7 @@ Plataforma digital comunitaria para Honorio Bicalho, Nova Lima, Minas Gerais. O 
 - Next.js 14 + React + TypeScript
 - Tailwind CSS + componentes no estilo ShadCN UI
 - Express para API externa
-- Prisma + PostgreSQL
+- Prisma + MySQL/MariaDB
 - NextAuth com login administrativo por credenciais
 - Google Maps API com fallback visual quando a chave nao esta configurada
 - Docker para ambiente containerizado
@@ -34,7 +34,13 @@ Se a porta `3000` estiver ocupada, o script de desenvolvimento escolhe a proxima
 
 ## Modo fallback
 
-O portal foi implementado para continuar funcional mesmo sem banco inicializado. Se `DATABASE_URL` nao estiver disponivel ou o PostgreSQL estiver offline, o site usa dados locais em memoria para demonstracao.
+O portal foi implementado para continuar funcional mesmo sem banco inicializado. Se `DATABASE_URL` nao estiver disponivel ou o MySQL estiver offline, o site usa um store local em `data/portal-store.json`.
+
+Isso significa que:
+
+- alteracoes feitas no painel admin continuam salvas entre reinicios locais
+- os arquivos enviados seguem em `public/uploads`
+- se voce apagar `data/portal-store.json`, o portal volta para os dados padrao de demonstracao
 
 ## Upload de imagens
 
@@ -62,10 +68,11 @@ Altere esses valores no `.env` antes de publicar.
 ## Scripts principais
 
 - `npm run dev`: Next.js + Express em paralelo
-- `npm run build`: build do frontend
-- `npm run start`: frontend e API em modo de producao
+- `npm run build`: build do portal e compilacao do runtime Node de producao
+- `npm run start`: sobe portal e API REST no mesmo processo Node
 - `npm run start:web`: sobe apenas o Next.js
 - `npm run start:api`: sobe apenas a API Express
+- `npm run prisma:deploy`: aplica migrations MySQL em ambiente de deploy quando `DATABASE_URL` estiver configurada
 - `npm run prisma:generate`: gera o client do Prisma
 - `npm run prisma:migrate`: executa migracoes locais
 - `npm run prisma:seed`: popula o banco com dados de exemplo
@@ -82,9 +89,29 @@ Altere esses valores no `.env` antes de publicar.
 
 ## Deploy
 
-- Vercel: deploy do frontend Next.js
-- API: deploy separado do Express via Docker ou outro runtime Node
-- Banco: PostgreSQL gerenciado
+### Hostinger
+
+Para deploy em Hostinger, o fluxo mais seguro agora e usar o projeto como um unico app Node:
+
+- Versao do Node: `20.x`
+- Build command: `npm run build`
+- Start command: `npm run start`
+- `PORT`: nao configure manualmente. A plataforma injeta essa variavel.
+- `NEXTAUTH_URL`: use a URL publica final do portal, por exemplo `https://portal.seudominio.com`
+
+Observacoes importantes:
+
+- Em producao, as rotas REST do Express respondem no mesmo dominio do site, sem depender de uma porta `4000` publica.
+- Se voce nao tiver MySQL externo, pode deixar `DATABASE_URL` vazio e o portal continuara funcional com o fallback em `data/portal-store.json`.
+- Se `DATABASE_URL` estiver configurada com MySQL, `npm run build` executa `prisma migrate deploy` antes do build.
+- Para persistencia administrativa real em producao, use MySQL/MariaDB externo com porta `3306`.
+- Uploads continuam sendo gravados em `public/uploads`. Em qualquer deploy que substitua os arquivos da aplicacao, use armazenamento externo se quiser preservar imagens entre reimplantes.
+
+### Outros cenarios
+
+- Docker: [`Dockerfile`](/d:/Users/Treinamento/Desktop/site%20Honorio%20bicalho/Dockerfile)
+- API separada: [`docker/api.Dockerfile`](/d:/Users/Treinamento/Desktop/site%20Honorio%20bicalho/docker/api.Dockerfile)
+- Banco: MySQL/MariaDB gerenciado ou fallback local
 
 ## API
 
@@ -111,3 +138,4 @@ As rotas administrativas exigem `x-admin-token` ou `Authorization: Bearer <token
 
 - [`docs/architecture.md`](/d:/Users/Treinamento/Desktop/site%20Honorio%20bicalho/docs/architecture.md)
 - [`docs/api.md`](/d:/Users/Treinamento/Desktop/site%20Honorio%20bicalho/docs/api.md)
+- [`docs/deploy-hostinger.md`](/d:/Users/Treinamento/Desktop/site%20Honorio%20bicalho/docs/deploy-hostinger.md)

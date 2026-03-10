@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import bcrypt from "bcryptjs";
-import { CategoryType, ModerationStatus, PrismaClient, TourismType, UserRole } from "@prisma/client";
+import { CategoryType, ModerationStatus, Prisma, PrismaClient, TourismType, UserRole } from "@prisma/client";
 
 import {
   mockBusinesses,
@@ -68,7 +68,8 @@ async function main() {
       name: "Equipe Portal Honorio Bicalho",
       email: process.env.ADMIN_EMAIL ?? "admin@portalhonoriobicalho.com.br",
       passwordHash,
-      role: UserRole.ADMIN
+      role: UserRole.ADMIN,
+      isActive: true
     }
   });
 
@@ -78,7 +79,8 @@ async function main() {
       name: "Luana Oliveira",
       email: "luana@exemplo.com",
       passwordHash,
-      role: UserRole.RESIDENT
+      role: UserRole.RESIDENT,
+      isActive: true
     }
   });
 
@@ -138,7 +140,7 @@ async function main() {
         instagram: item.instagram,
         latitude: item.latitude,
         longitude: item.longitude,
-        images: item.images,
+        images: item.images as Prisma.InputJsonValue,
         categoryId: item.category?.id
       }
     });

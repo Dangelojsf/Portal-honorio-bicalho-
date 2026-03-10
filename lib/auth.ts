@@ -29,6 +29,10 @@ export const authOptions: NextAuthOptions = {
         const user = await findUserByEmail(email);
 
         if (user?.passwordHash) {
+          if (!user.isActive) {
+            return null;
+          }
+
           const isValid = await bcrypt.compare(password, user.passwordHash);
           if (!isValid) {
             return null;

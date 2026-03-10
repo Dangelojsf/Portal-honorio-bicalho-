@@ -5,7 +5,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
-RUN npx prisma generate
+RUN npm run prisma:generate
 
 ENV NODE_ENV=production
 EXPOSE 4000

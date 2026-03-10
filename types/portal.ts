@@ -16,7 +16,9 @@ export type BusinessCategorySlug =
 export type CommunityCategorySlug = "announcements" | "jobs" | "services" | "lost-items";
 export type TourismKind = "trilhas" | "cachoeiras" | "mirantes" | "historico";
 export type CommunityStatus = "pending" | "approved" | "rejected";
-export type UserRole = "visitor" | "resident" | "business" | "admin";
+export type UserRole = "visitor" | "resident" | "business" | "moderator" | "admin";
+export type AuditEntityType = "news" | "event" | "business" | "tourism" | "community" | "site-settings" | "moderator";
+export type AuditActionType = "create" | "update" | "delete" | "approve" | "reject" | "activate" | "deactivate";
 
 export interface PortalCategory {
   id: string;
@@ -30,7 +32,12 @@ export interface PortalUser {
   name: string;
   email: string;
   role: UserRole;
-  image?: string | null;
+  image: string | null;
+  isActive: boolean;
+}
+
+export interface StoredPortalUser extends PortalUser {
+  passwordHash: string | null;
 }
 
 export interface PortalNews {
@@ -104,6 +111,21 @@ export interface PortalSiteSettings {
   historyTitle: string;
   historyDescription: string;
   historyImage: string;
+}
+
+export interface PortalAuditLog {
+  id: string;
+  entityType: AuditEntityType;
+  entityId?: string | null;
+  entityTitle?: string | null;
+  action: AuditActionType;
+  summary: string;
+  actorId?: string | null;
+  actorName: string;
+  actorRole: UserRole;
+  beforeData?: Record<string, unknown> | null;
+  afterData?: Record<string, unknown> | null;
+  createdAt: string;
 }
 
 export interface HomePageData {
@@ -192,4 +214,25 @@ export interface SaveSiteSettingsInput {
   historyTitle: string;
   historyDescription: string;
   historyImage: string;
+}
+
+export interface SaveModeratorInput {
+  id?: string;
+  name: string;
+  email: string;
+  password?: string;
+  isActive: boolean;
+}
+
+export interface CreateAuditLogInput {
+  entityType: AuditEntityType;
+  entityId?: string | null;
+  entityTitle?: string | null;
+  action: AuditActionType;
+  summary: string;
+  actorId?: string | null;
+  actorName: string;
+  actorRole: UserRole;
+  beforeData?: Record<string, unknown> | null;
+  afterData?: Record<string, unknown> | null;
 }

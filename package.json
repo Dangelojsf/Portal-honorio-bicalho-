@@ -6,15 +6,20 @@
     "dev": "node scripts/dev.mjs",
     "dev:web": "node scripts/dev-web.mjs",
     "dev:api": "tsx watch api/server.ts",
-    "build": "next build && tsc --noEmit",
+    "build": "npm run prisma:generate && npm run prisma:deploy && npm run build:web && tsc --noEmit && npm run build:server",
+    "build:server": "tsc -p tsconfig.server.json",
     "build:web": "next build",
-    "start": "concurrently -n web,api -c \"bgBlue.bold,bgGreen.bold\" \"next start\" \"tsx api/server.ts\"",
-    "start:web": "next start",
+    "start": "node server.js",
+    "start:web": "next start -H 0.0.0.0",
     "start:api": "tsx api/server.ts",
-    "prisma:generate": "prisma generate",
+    "prisma:deploy": "node scripts/prisma-deploy.mjs",
+    "prisma:generate": "node scripts/prisma-generate.mjs",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "node scripts/prisma-generate.mjs"
+  },
+  "engines": {
+    "node": ">=20 <25"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -27,7 +32,6 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "concurrently": "^9.0.1",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",

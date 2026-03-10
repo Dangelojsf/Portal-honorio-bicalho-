@@ -17,9 +17,9 @@ export function SiteHeader() {
     <header className="relative z-40 pt-3">
       <div className="page-shell-wide">
         <div className="rounded-t-[1.5rem] border border-white/10 bg-primary/95 shadow-soft backdrop-blur">
-          <div className="flex items-center gap-4 px-4 py-2 sm:px-6">
+          <div className="flex items-center gap-3 px-4 py-2 sm:px-6">
             <SiteLogo className="shrink-0" />
-            <nav className="ml-6 hidden flex-1 items-center justify-start gap-1 lg:flex xl:gap-2">
+            <nav className="hidden min-w-0 flex-1 items-center justify-between gap-1 lg:flex lg:pl-5 xl:pl-8">
               {navigation.map((item) => {
                 const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
 
@@ -28,7 +28,7 @@ export function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "border-b-2 border-transparent px-2.5 py-2 text-sm font-medium whitespace-nowrap text-white/82 transition hover:text-white xl:px-3",
+                      "flex-1 border-b-2 border-transparent px-2 py-2 text-center text-sm font-medium whitespace-nowrap text-white/82 transition hover:text-white",
                       active && "border-white text-white"
                     )}
                   >
@@ -37,14 +37,14 @@ export function SiteHeader() {
                 );
               })}
             </nav>
-            <div className="hidden items-center gap-2 pl-3 lg:flex">
+            <div className="hidden shrink-0 items-center gap-2 pl-4 lg:flex">
               <Button asChild variant="accent" size="sm" className="h-9 px-4">
-                <Link href="/admin">Dashboard</Link>
+                <Link href="/admin">Login Adm</Link>
               </Button>
             </div>
             <div className="ml-auto flex items-center gap-2 lg:hidden">
               <Button asChild variant="accent" size="sm" className="h-9 px-4">
-                <Link href="/admin">Entrar</Link>
+                <Link href="/admin">Login Adm</Link>
               </Button>
               <Button
                 variant="ghost"

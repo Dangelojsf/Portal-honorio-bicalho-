@@ -5,7 +5,7 @@ import type {
   PortalEvent,
   PortalNews,
   PortalTourismSpot,
-  PortalUser
+  StoredPortalUser
 } from "../types/portal";
 
 const newsCategories: PortalCategory[] = [
@@ -41,20 +41,24 @@ export const mockCategories: PortalCategory[] = [
 
 const categoryById = Object.fromEntries(mockCategories.map((category) => [category.id, category]));
 
-export const mockUsers: PortalUser[] = [
+export const mockUsers: StoredPortalUser[] = [
   {
     id: "user-admin",
     name: "Equipe Portal Honorio Bicalho",
     email: "admin@portalhonoriobicalho.com.br",
     role: "admin",
-    image: null
+    image: null,
+    isActive: true,
+    passwordHash: null
   },
   {
     id: "user-moradora-luana",
     name: "Luana Oliveira",
     email: "luana@exemplo.com",
     role: "resident",
-    image: null
+    image: null,
+    isActive: true,
+    passwordHash: null
   }
 ];
 

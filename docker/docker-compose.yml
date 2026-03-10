@@ -2,17 +2,18 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16-alpine
+    image: mariadb:11.4
     container_name: portal-honorio-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: portal_honorio_bicalho
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MARIADB_DATABASE: portal_honorio_bicalho
+      MARIADB_USER: portal
+      MARIADB_PASSWORD: portal
+      MARIADB_ROOT_PASSWORD: root
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - portal_honorio_db:/var/lib/postgresql/data
+      - portal_honorio_db:/var/lib/mysql
 
   api:
     build:
@@ -22,9 +23,8 @@ services:
       - ../.env
     environment:
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/portal_honorio_bicalho?schema=public
+      DATABASE_URL: mysql://portal:portal@db:3306/portal_honorio_bicalho
       NEXTAUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_API_URL: http://localhost:4000
     depends_on:
       - db
     ports:
@@ -37,9 +37,8 @@ services:
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/portal_honorio_bicalho?schema=public
+      DATABASE_URL: mysql://portal:portal@db:3306/portal_honorio_bicalho
       NEXTAUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_API_URL: http://localhost:4000
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
     depends_on:
       - api

@@ -1,6 +1,7 @@
 # API REST
 
 Base local padrao: `http://localhost:4000`
+Base em producao: mesmo dominio do portal, por exemplo `https://portal.seudominio.com`
 
 ## Publica
 

@@ -21,16 +21,24 @@ import {
   rejectCommunityPostAction,
   saveBusinessAction,
   saveEventAction,
+  saveModeratorAction,
   saveNewsAction,
   saveSiteSettingsAction,
   saveTourismSpotAction
 } from "@/app/admin/actions";
 import { authOptions } from "@/lib/auth";
-import { getAdminSnapshot } from "@/lib/repositories";
-import type { PortalBusiness, PortalEvent, PortalNews, PortalSiteSettings, PortalTourismSpot } from "@/types/portal";
+import { getAdminSnapshot, getAuditLogs, getModeratorUsers } from "@/lib/repositories";
+import type { PortalAuditLog, PortalBusiness, PortalEvent, PortalNews, PortalSiteSettings, PortalTourismSpot, PortalUser } from "@/types/portal";
 
 function toDateTimeLocal(value: string) {
   return value.slice(0, 16);
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(new Date(value));
 }
 
 function categoriesByType(
@@ -42,14 +50,21 @@ function categoriesByType(
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
+  const isAdmin = session?.user.role === "admin";
+  const canAccessAdmin = session?.user && (session.user.role === "admin" || session.user.role === "moderator");
 
-  if (!session?.user || session.user.role !== "admin") {
+  if (!canAccessAdmin) {
     redirect("/login?callbackUrl=/admin");
   }
 
   const snapshot = await getAdminSnapshot();
+  const moderators = isAdmin ? await getModeratorUsers() : [];
+  const auditLogs = isAdmin ? await getAuditLogs(60) : [];
   const newsCategories = categoriesByType(snapshot.categories, "news");
   const businessCategories = categoriesByType(snapshot.categories, "business");
+  const metrics = isAdmin
+    ? [...snapshot.metrics, { label: "Moderadores", value: moderators.length.toString() }]
+    : snapshot.metrics;
 
   return (
     <section className="page-shell py-14">
@@ -57,14 +72,18 @@ export default async function AdminPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <SectionHeading
             eyebrow="Painel administrativo"
-            title="Gerencie o portal"
-            description="Cadastre noticias, eventos, negocios, pontos turisticos e modere as publicacoes da comunidade."
+            title={isAdmin ? "Gerencie o portal" : "Gerencie os conteudos"}
+            description={
+              isAdmin
+                ? "Cadastre noticias, eventos, negocios, pontos turisticos, modere a comunidade e gerencie moderadores."
+                : "Cadastre noticias, eventos, negocios, pontos turisticos e modere as publicacoes da comunidade."
+            }
           />
           <AdminSignOutButton />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {snapshot.metrics.map((metric) => (
+          {metrics.map((metric) => (
             <Card key={metric.label}>
               <CardContent className="p-6">
                 <p className="text-sm text-muted-foreground">{metric.label}</p>
@@ -81,7 +100,9 @@ export default async function AdminPage() {
             <TabsTrigger value="businesses">Negocios</TabsTrigger>
             <TabsTrigger value="tourism">Turismo</TabsTrigger>
             <TabsTrigger value="community">Comunidade</TabsTrigger>
-            <TabsTrigger value="appearance">Aparencia</TabsTrigger>
+            {isAdmin ? <TabsTrigger value="appearance">Aparencia</TabsTrigger> : null}
+            {isAdmin ? <TabsTrigger value="users">Usuarios</TabsTrigger> : null}
+            {isAdmin ? <TabsTrigger value="history">Historico</TabsTrigger> : null}
           </TabsList>
 
           <TabsContent value="news">
@@ -93,7 +114,7 @@ export default async function AdminPage() {
                 {snapshot.news.map((item) => (
                   <AdminCard key={item.id} title={item.title}>
                     <NewsForm action={saveNewsAction} categories={newsCategories} initial={item} />
-                    <DeleteForm action={deleteNewsAction} id={item.id} />
+                    <DeleteForm action={deleteNewsAction} id={item.id} title={item.title} />
                   </AdminCard>
                 ))}
               </div>
@@ -109,7 +130,7 @@ export default async function AdminPage() {
                 {snapshot.events.map((item) => (
                   <AdminCard key={item.id} title={item.title}>
                     <EventForm action={saveEventAction} initial={item} />
-                    <DeleteForm action={deleteEventAction} id={item.id} />
+                    <DeleteForm action={deleteEventAction} id={item.id} title={item.title} />
                   </AdminCard>
                 ))}
               </div>
@@ -125,7 +146,7 @@ export default async function AdminPage() {
                 {snapshot.businesses.map((item) => (
                   <AdminCard key={item.id} title={item.name}>
                     <BusinessForm action={saveBusinessAction} categories={businessCategories} initial={item} />
-                    <DeleteForm action={deleteBusinessAction} id={item.id} />
+                    <DeleteForm action={deleteBusinessAction} id={item.id} title={item.name} />
                   </AdminCard>
                 ))}
               </div>
@@ -141,7 +162,7 @@ export default async function AdminPage() {
                 {snapshot.tourismSpots.map((item) => (
                   <AdminCard key={item.id} title={item.name}>
                     <TourismForm action={saveTourismSpotAction} initial={item} />
-                    <DeleteForm action={deleteTourismSpotAction} id={item.id} />
+                    <DeleteForm action={deleteTourismSpotAction} id={item.id} title={item.name} />
                   </AdminCard>
                 ))}
               </div>
@@ -165,9 +186,9 @@ export default async function AdminPage() {
                       </div>
                       <p className="text-sm text-muted-foreground">{item.content}</p>
                       <div className="flex flex-wrap gap-3">
-                        <InlineActionForm action={approveCommunityPostAction} id={item.id} label="Aprovar" />
-                        <InlineActionForm action={rejectCommunityPostAction} id={item.id} label="Rejeitar" variant="secondary" />
-                        <InlineActionForm action={deleteCommunityPostAction} id={item.id} label="Excluir" variant="ghost" />
+                        <InlineActionForm action={approveCommunityPostAction} id={item.id} title={item.title} label="Aprovar" />
+                        <InlineActionForm action={rejectCommunityPostAction} id={item.id} title={item.title} label="Rejeitar" variant="secondary" />
+                        <InlineActionForm action={deleteCommunityPostAction} id={item.id} title={item.title} label="Excluir" variant="ghost" />
                       </div>
                     </CardContent>
                   </Card>
@@ -181,44 +202,91 @@ export default async function AdminPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="appearance">
-            <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-              <AdminCard title="Imagens e textos globais">
-                <SiteSettingsForm action={saveSiteSettingsAction} initial={snapshot.siteSettings} />
-              </AdminCard>
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Preview rapido</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Hero da home</p>
-                    <div className="overflow-hidden rounded-[1.5rem] border border-border">
-                      <img
-                        src={snapshot.siteSettings.heroImage}
-                        alt={snapshot.siteSettings.heroTitle}
-                        className="h-56 w-full object-cover"
-                      />
+          {isAdmin ? (
+            <TabsContent value="appearance">
+              <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                <AdminCard title="Imagens e textos globais">
+                  <SiteSettingsForm action={saveSiteSettingsAction} initial={snapshot.siteSettings} />
+                </AdminCard>
+                <Card className="overflow-hidden">
+                  <CardHeader>
+                    <CardTitle>Preview rapido</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium">Hero da home</p>
+                      <div className="overflow-hidden rounded-[1.5rem] border border-border">
+                        <img
+                          src={snapshot.siteSettings.heroImage}
+                          alt={snapshot.siteSettings.heroTitle}
+                          className="h-56 w-full object-cover"
+                        />
+                      </div>
+                      <p className="text-lg font-semibold">{snapshot.siteSettings.heroTitle}</p>
+                      <p className="text-sm text-muted-foreground">{snapshot.siteSettings.heroSubtitle}</p>
                     </div>
-                    <p className="text-lg font-semibold">{snapshot.siteSettings.heroTitle}</p>
-                    <p className="text-sm text-muted-foreground">{snapshot.siteSettings.heroSubtitle}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Bloco de historia</p>
-                    <div className="overflow-hidden rounded-[1.5rem] border border-border">
-                      <img
-                        src={snapshot.siteSettings.historyImage}
-                        alt={snapshot.siteSettings.historyTitle}
-                        className="h-56 w-full object-cover"
-                      />
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium">Bloco de historia</p>
+                      <div className="overflow-hidden rounded-[1.5rem] border border-border">
+                        <img
+                          src={snapshot.siteSettings.historyImage}
+                          alt={snapshot.siteSettings.historyTitle}
+                          className="h-56 w-full object-cover"
+                        />
+                      </div>
+                      <p className="text-lg font-semibold">{snapshot.siteSettings.historyTitle}</p>
+                      <p className="text-sm text-muted-foreground">{snapshot.siteSettings.historyDescription}</p>
                     </div>
-                    <p className="text-lg font-semibold">{snapshot.siteSettings.historyTitle}</p>
-                    <p className="text-sm text-muted-foreground">{snapshot.siteSettings.historyDescription}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          ) : null}
+
+          {isAdmin ? (
+            <TabsContent value="users">
+              <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                <AdminCard title="Novo moderador">
+                  <ModeratorForm action={saveModeratorAction} />
+                </AdminCard>
+                <div className="space-y-4">
+                  {moderators.length ? (
+                    moderators.map((item) => (
+                      <AdminCard key={item.id} title={item.name}>
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-sm text-muted-foreground">{item.email}</p>
+                          <Badge variant={item.isActive ? "default" : "muted"}>{item.isActive ? "ativo" : "inativo"}</Badge>
+                        </div>
+                        <ModeratorForm action={saveModeratorAction} initial={item} />
+                      </AdminCard>
+                    ))
+                  ) : (
+                    <EmptyState
+                      title="Nenhum moderador cadastrado"
+                      description="Crie moderadores para ajudar com conteudo sem liberar alteracoes de aparencia ou usuarios."
+                    />
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          ) : null}
+
+          {isAdmin ? (
+            <TabsContent value="history">
+              {auditLogs.length ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {auditLogs.map((item) => (
+                    <AuditLogCard key={item.id} item={item} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="Sem historico registrado"
+                  description="As proximas alteracoes feitas no painel aparecerao aqui com usuario, acao e horario."
+                />
+              )}
+            </TabsContent>
+          ) : null}
         </Tabs>
       </div>
     </section>
@@ -450,14 +518,17 @@ function TourismForm({
 
 function DeleteForm({
   action,
-  id
+  id,
+  title
 }: {
   action: (formData: FormData) => Promise<void>;
   id: string;
+  title: string;
 }) {
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="entityTitle" value={title} />
       <FormSubmitButton type="submit" variant="ghost">
         Excluir
       </FormSubmitButton>
@@ -468,19 +539,114 @@ function DeleteForm({
 function InlineActionForm({
   action,
   id,
+  title,
   label,
   variant = "accent"
 }: {
   action: (formData: FormData) => Promise<void>;
   id: string;
+  title: string;
   label: string;
   variant?: "accent" | "secondary" | "ghost";
 }) {
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="entityTitle" value={title} />
       <FormSubmitButton type="submit" variant={variant} size="sm">
         {label}
+      </FormSubmitButton>
+    </form>
+  );
+}
+
+function auditActionLabel(action: PortalAuditLog["action"]) {
+  switch (action) {
+    case "create":
+      return "criado";
+    case "update":
+      return "atualizado";
+    case "delete":
+      return "excluido";
+    case "approve":
+      return "aprovado";
+    case "reject":
+      return "rejeitado";
+    case "activate":
+      return "ativado";
+    default:
+      return "desativado";
+  }
+}
+
+function auditEntityLabel(entityType: PortalAuditLog["entityType"]) {
+  switch (entityType) {
+    case "news":
+      return "Noticia";
+    case "event":
+      return "Evento";
+    case "business":
+      return "Negocio";
+    case "tourism":
+      return "Turismo";
+    case "community":
+      return "Comunidade";
+    case "site-settings":
+      return "Aparencia";
+    default:
+      return "Moderador";
+  }
+}
+
+function AuditLogCard({ item }: { item: PortalAuditLog }) {
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">{item.entityTitle ?? auditEntityLabel(item.entityType)}</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{auditEntityLabel(item.entityType)}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="muted">{auditActionLabel(item.action)}</Badge>
+            <Badge variant={item.actorRole === "admin" ? "default" : "accent"}>{item.actorRole}</Badge>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">{item.summary}</p>
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>{item.actorName}</p>
+          <p>{formatDateTime(item.createdAt)}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ModeratorForm({
+  action,
+  initial
+}: {
+  action: (formData: FormData) => Promise<void>;
+  initial?: PortalUser;
+}) {
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="id" value={initial?.id ?? ""} />
+      <Field label="Nome" name="name" defaultValue={initial?.name} />
+      <Field label="Email" name="email" type="email" defaultValue={initial?.email} />
+      <Field
+        label={initial ? "Nova senha" : "Senha"}
+        name="password"
+        type="password"
+        placeholder={initial ? "Deixe em branco para manter a atual" : "Minimo de 6 caracteres"}
+        required={!initial}
+      />
+      <label className="flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 text-sm font-medium">
+        <input type="checkbox" name="isActive" defaultChecked={initial ? initial.isActive : true} className="h-4 w-4 rounded border-border" />
+        Moderador ativo
+      </label>
+      <FormSubmitButton type="submit" variant="accent">
+        {initial ? "Salvar moderador" : "Criar moderador"}
       </FormSubmitButton>
     </form>
   );

@@ -1,11 +1,14 @@
-import { CategoryType, ModerationStatus, TourismType, UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { CategoryType, ModerationStatus, Prisma, TourismType, UserRole } from "@prisma/client";
 
-import { portalStore, generateId } from "./mock-store";
+import { portalStore, generateId, persistPortalStore } from "./mock-store";
 import { prisma } from "./prisma";
 import { defaultSiteSettings } from "./site";
 import type {
   CategoryKind,
+  CreateAuditLogInput,
   CreateCommunityPostInput,
+  PortalAuditLog,
   HomePageData,
   PortalBusiness,
   PortalCategory,
@@ -15,17 +18,26 @@ import type {
   PortalSiteSettings,
   PortalTourismSpot,
   PortalUser,
+  SaveModeratorInput,
   SaveBusinessInput,
   SaveEventInput,
   SaveNewsInput,
   SaveSiteSettingsInput,
-  SaveTourismSpotInput
+  SaveTourismSpotInput,
+  StoredPortalUser
 } from "../types/portal";
 
-type AuthenticatedPortalUser = PortalUser & {
-  image: string | null;
-  passwordHash: string | null;
-};
+function normalizeBusinessImages(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map(String).filter(Boolean);
+}
+
+function toPrismaJsonArray(values: string[]) {
+  return values as Prisma.InputJsonValue;
+}
 
 function categoryTypeToPortal(type: CategoryType): CategoryKind {
   switch (type) {
@@ -101,12 +113,29 @@ function userRoleToPortal(role: UserRole): PortalUser["role"] {
   switch (role) {
     case UserRole.ADMIN:
       return "admin";
+    case UserRole.MODERATOR:
+      return "moderator";
     case UserRole.BUSINESS:
       return "business";
     case UserRole.RESIDENT:
       return "resident";
     default:
       return "visitor";
+  }
+}
+
+function userRoleToPrisma(role: PortalUser["role"]) {
+  switch (role) {
+    case "admin":
+      return UserRole.ADMIN;
+    case "moderator":
+      return UserRole.MODERATOR;
+    case "business":
+      return UserRole.BUSINESS;
+    case "resident":
+      return UserRole.RESIDENT;
+    default:
+      return UserRole.VISITOR;
   }
 }
 
@@ -125,6 +154,24 @@ function mapCategory(category?: {
     name: category.name,
     slug: category.slug,
     type: categoryTypeToPortal(category.type)
+  };
+}
+
+function mapUser(item: {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  image: string | null;
+}): PortalUser {
+  return {
+    id: item.id,
+    name: item.name,
+    email: item.email,
+    role: userRoleToPortal(item.role),
+    isActive: item.isActive,
+    image: item.image
   };
 }
 
@@ -192,7 +239,7 @@ function mapBusiness(item: {
   instagram: string | null;
   latitude: number | null;
   longitude: number | null;
-  images: string[];
+  images: unknown;
   category?: {
     id: string;
     name: string;
@@ -211,7 +258,7 @@ function mapBusiness(item: {
     instagram: item.instagram,
     latitude: item.latitude,
     longitude: item.longitude,
-    images: item.images,
+    images: normalizeBusinessImages(item.images),
     category: mapCategory(item.category)
   };
 }
@@ -289,8 +336,54 @@ function mapSiteSettings(item: {
   };
 }
 
+function normalizeAuditData(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function toPrismaAuditData(value?: Record<string, unknown> | null) {
+  return value ? (value as Prisma.InputJsonValue) : undefined;
+}
+
+function mapAuditLog(item: {
+  id: string;
+  entityType: string;
+  entityId: string | null;
+  entityTitle: string | null;
+  action: string;
+  summary: string;
+  actorId: string | null;
+  actorName: string;
+  actorRole: UserRole;
+  beforeData: unknown;
+  afterData: unknown;
+  createdAt: Date;
+}): PortalAuditLog {
+  return {
+    id: item.id,
+    entityType: item.entityType as PortalAuditLog["entityType"],
+    entityId: item.entityId,
+    entityTitle: item.entityTitle,
+    action: item.action as PortalAuditLog["action"],
+    summary: item.summary,
+    actorId: item.actorId,
+    actorName: item.actorName,
+    actorRole: userRoleToPortal(item.actorRole),
+    beforeData: normalizeAuditData(item.beforeData),
+    afterData: normalizeAuditData(item.afterData),
+    createdAt: item.createdAt.toISOString()
+  };
+}
+
+function hasDatabaseConnection() {
+  return process.env.DATABASE_URL?.trim().toLowerCase().startsWith("mysql://") ?? false;
+}
+
 async function withFallback<T>(loader: () => Promise<T>, fallback: () => T | Promise<T>) {
-  if (!process.env.DATABASE_URL) {
+  if (!hasDatabaseConnection()) {
     return fallback();
   }
 
@@ -299,6 +392,11 @@ async function withFallback<T>(loader: () => Promise<T>, fallback: () => T | Pro
   } catch {
     return fallback();
   }
+}
+
+function persistFallback<T>(value: T) {
+  persistPortalStore();
+  return value;
 }
 
 function getCategoryFromStore(categoryId?: string | null) {
@@ -339,20 +437,14 @@ export async function getUsers() {
   return withFallback(
     async () => {
       const items = await prisma.user.findMany({ orderBy: { name: "asc" } });
-      return items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        email: item.email,
-        role: userRoleToPortal(item.role),
-        image: item.image
-      }));
+      return items.map(mapUser);
     },
-    () => [...portalStore.users]
+    () => portalStore.users.map((item) => ({ ...item }))
   );
 }
 
 export async function findUserByEmail(email: string) {
-  return withFallback<AuthenticatedPortalUser | null>(
+  return withFallback<StoredPortalUser | null>(
     async () => {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
@@ -364,6 +456,7 @@ export async function findUserByEmail(email: string) {
         name: user.name,
         email: user.email,
         role: userRoleToPortal(user.role),
+        isActive: user.isActive,
         image: user.image,
         passwordHash: user.passwordHash
       };
@@ -376,11 +469,180 @@ export async function findUserByEmail(email: string) {
 
       return {
         ...fallback,
-        image: fallback.image ?? null,
-        passwordHash: null
+        image: fallback.image ?? null
       };
     }
   );
+}
+
+export async function getModeratorUsers() {
+  return withFallback(
+    async () => {
+      const items = await prisma.user.findMany({
+        where: { role: UserRole.MODERATOR },
+        orderBy: { name: "asc" }
+      });
+      return items.map(mapUser);
+    },
+    () =>
+      portalStore.users
+        .filter((item) => item.role === "moderator")
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          role: item.role,
+          image: item.image,
+          isActive: item.isActive
+        }))
+  );
+}
+
+export async function saveModerator(input: SaveModeratorInput) {
+  const passwordHash = input.password ? await bcrypt.hash(input.password, 10) : undefined;
+
+  if (hasDatabaseConnection()) {
+    if (input.id) {
+      const existing = await prisma.user.findUnique({ where: { id: input.id } });
+
+      if (!existing || existing.role !== UserRole.MODERATOR) {
+        throw new Error("Moderador nao encontrado");
+      }
+
+      const saved = await prisma.user.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          email: input.email,
+          isActive: input.isActive,
+          ...(passwordHash ? { passwordHash } : {})
+        }
+      });
+
+      return mapUser(saved);
+    }
+
+    const saved = await prisma.user.create({
+      data: {
+        id: generateId("moderator"),
+        name: input.name,
+        email: input.email,
+        role: UserRole.MODERATOR,
+        isActive: input.isActive,
+        passwordHash: passwordHash ?? ""
+      }
+    });
+
+    return mapUser(saved);
+  }
+
+  const duplicate = portalStore.users.find((item) => item.email === input.email && item.id !== input.id);
+  if (duplicate) {
+    throw new Error("Ja existe um usuario com este email");
+  }
+
+  if (input.id) {
+    const index = portalStore.users.findIndex((item) => item.id === input.id && item.role === "moderator");
+    if (index < 0) {
+      throw new Error("Moderador nao encontrado");
+    }
+
+    portalStore.users[index] = {
+      ...portalStore.users[index],
+      name: input.name,
+      email: input.email,
+      isActive: input.isActive,
+      passwordHash: passwordHash ?? portalStore.users[index].passwordHash
+    };
+
+    persistPortalStore();
+    return {
+      id: portalStore.users[index].id,
+      name: portalStore.users[index].name,
+      email: portalStore.users[index].email,
+      role: portalStore.users[index].role,
+      image: portalStore.users[index].image,
+      isActive: portalStore.users[index].isActive
+    };
+  }
+
+  const moderator: StoredPortalUser = {
+    id: generateId("moderator"),
+    name: input.name,
+    email: input.email,
+    role: "moderator",
+    isActive: input.isActive,
+    image: null,
+    passwordHash: passwordHash ?? null
+  };
+
+  portalStore.users.push(moderator);
+  persistPortalStore();
+
+  return {
+    id: moderator.id,
+    name: moderator.name,
+    email: moderator.email,
+    role: moderator.role,
+    image: moderator.image,
+    isActive: moderator.isActive
+  };
+}
+
+export async function getAuditLogs(limit = 40) {
+  return withFallback(
+    async () => {
+      const items = await prisma.auditLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: limit
+      });
+
+      return items.map(mapAuditLog);
+    },
+    () => sortByDateDesc(portalStore.auditLogs).slice(0, limit)
+  );
+}
+
+export async function recordAuditLog(input: CreateAuditLogInput) {
+  if (hasDatabaseConnection()) {
+    const saved = await prisma.auditLog.create({
+      data: {
+        id: generateId("audit"),
+        entityType: input.entityType,
+        entityId: input.entityId ?? null,
+        entityTitle: input.entityTitle ?? null,
+        action: input.action,
+        summary: input.summary,
+        actorId: input.actorId ?? null,
+        actorName: input.actorName,
+        actorRole: userRoleToPrisma(input.actorRole),
+        ...(input.beforeData ? { beforeData: toPrismaAuditData(input.beforeData) } : {}),
+        ...(input.afterData ? { afterData: toPrismaAuditData(input.afterData) } : {})
+      }
+    });
+
+    return mapAuditLog(saved);
+  }
+
+  const nextItem: PortalAuditLog = {
+    id: generateId("audit"),
+    entityType: input.entityType,
+    entityId: input.entityId ?? null,
+    entityTitle: input.entityTitle ?? null,
+    action: input.action,
+    summary: input.summary,
+    actorId: input.actorId ?? null,
+    actorName: input.actorName,
+    actorRole: input.actorRole,
+    beforeData: input.beforeData ?? null,
+    afterData: input.afterData ?? null,
+    createdAt: new Date().toISOString()
+  };
+
+  portalStore.auditLogs.unshift(nextItem);
+  persistPortalStore();
+  return nextItem;
 }
 
 export async function getLatestNews(limit?: number) {
@@ -566,7 +828,7 @@ export async function saveNews(input: SaveNewsInput) {
         portalStore.news.unshift(nextItem);
       }
 
-      return nextItem;
+      return persistFallback(nextItem);
     }
   );
 }
@@ -582,7 +844,7 @@ export async function deleteNews(id: string) {
       if (index >= 0) {
         portalStore.news.splice(index, 1);
       }
-      return true;
+      return persistFallback(true);
     }
   );
 }
@@ -640,7 +902,7 @@ export async function saveEvent(input: SaveEventInput) {
         portalStore.events.push(nextItem);
       }
 
-      return nextItem;
+      return persistFallback(nextItem);
     }
   );
 }
@@ -656,7 +918,7 @@ export async function deleteEvent(id: string) {
       if (index >= 0) {
         portalStore.events.splice(index, 1);
       }
-      return true;
+      return persistFallback(true);
     }
   );
 }
@@ -675,7 +937,7 @@ export async function saveBusiness(input: SaveBusinessInput) {
           instagram: input.instagram || null,
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
-          images: input.images,
+          images: toPrismaJsonArray(input.images),
           categoryId: input.categoryId || null
         },
         create: {
@@ -689,7 +951,7 @@ export async function saveBusiness(input: SaveBusinessInput) {
           instagram: input.instagram || null,
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
-          images: input.images,
+          images: toPrismaJsonArray(input.images),
           categoryId: input.categoryId || null
         },
         include: { category: true }
@@ -719,7 +981,7 @@ export async function saveBusiness(input: SaveBusinessInput) {
         portalStore.businesses.push(nextItem);
       }
 
-      return nextItem;
+      return persistFallback(nextItem);
     }
   );
 }
@@ -735,7 +997,7 @@ export async function deleteBusiness(id: string) {
       if (index >= 0) {
         portalStore.businesses.splice(index, 1);
       }
-      return true;
+      return persistFallback(true);
     }
   );
 }
@@ -791,7 +1053,7 @@ export async function saveTourismSpot(input: SaveTourismSpotInput) {
         portalStore.tourismSpots.push(nextItem);
       }
 
-      return nextItem;
+      return persistFallback(nextItem);
     }
   );
 }
@@ -807,7 +1069,7 @@ export async function deleteTourismSpot(id: string) {
       if (index >= 0) {
         portalStore.tourismSpots.splice(index, 1);
       }
-      return true;
+      return persistFallback(true);
     }
   );
 }
@@ -851,7 +1113,7 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput) {
         historyImage: input.historyImage
       };
 
-      return portalStore.siteSettings;
+      return persistFallback(portalStore.siteSettings);
     }
   );
 }
@@ -886,7 +1148,7 @@ export async function createCommunityPost(input: CreateCommunityPostInput) {
       };
 
       portalStore.communityPosts.unshift(nextItem);
-      return nextItem;
+      return persistFallback(nextItem);
     }
   );
 }
@@ -908,7 +1170,7 @@ export async function moderateCommunityPost(id: string, status: PortalCommunityP
       }
 
       post.status = status;
-      return post;
+      return persistFallback(post);
     }
   );
 }
@@ -924,7 +1186,7 @@ export async function deleteCommunityPost(id: string) {
       if (index >= 0) {
         portalStore.communityPosts.splice(index, 1);
       }
-      return true;
+      return persistFallback(true);
     }
   );
 }

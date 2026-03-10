@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/section-heading";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Acesso administrativo do Portal Honorio Bicalho."
+  description: "Acesso da equipe do Portal Honorio Bicalho."
 };
 
 interface LoginPageProps {
@@ -19,9 +19,9 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
     <section className="page-shell py-14">
       <div className="space-y-8">
         <SectionHeading
-          eyebrow="Administracao"
+          eyebrow="Equipe do portal"
           title="Entrar no dashboard"
-          description="Use as credenciais administrativas para moderar conteudos, eventos e negocios do portal."
+          description="Use suas credenciais de admin ou moderador para acessar o painel e gerenciar os conteudos permitidos."
           align="center"
         />
         <LoginForm callbackUrl={searchParams?.callbackUrl} />

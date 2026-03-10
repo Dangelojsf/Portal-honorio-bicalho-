@@ -47,7 +47,6 @@ export function createDevEnv(port, apiPort = null) {
   };
 
   if (apiPort !== null) {
-    env.NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${apiPort}`;
     env.PORT = process.env.PORT || String(apiPort);
   }
 

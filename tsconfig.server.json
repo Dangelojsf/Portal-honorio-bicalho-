@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["es2022"],
+    "types": ["node"],
+    "incremental": false,
+    "isolatedModules": false
+  },
+  "include": [
+    "api/**/*.ts",
+    "lib/mock-data.ts",
+    "lib/mock-store.ts",
+    "lib/prisma.ts",
+    "lib/repositories.ts",
+    "lib/site.ts",
+    "lib/validators.ts",
+    "types/portal.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}

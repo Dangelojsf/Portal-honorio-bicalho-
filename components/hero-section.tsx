@@ -11,6 +11,12 @@ interface HeroSectionProps {
   image: string;
 }
 
+const HERO_QUICK_LINKS = [
+  { icon: Newspaper, label: "Cobertura local", href: "/news" },
+  { icon: CalendarDays, label: "Agenda ativa", href: "/events" },
+  { icon: MapPinned, label: "Mapa interativo", href: "/#mapa-local" }
+] as const;
+
 export function HeroSection({ title, subtitle, image }: HeroSectionProps) {
   return (
     <section className="page-shell-wide pt-0">
@@ -40,18 +46,16 @@ export function HeroSection({ title, subtitle, image }: HeroSectionProps) {
                 </Button>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[1.25rem] border border-white/12 bg-black/10 p-4 backdrop-blur-sm">
-                  <Newspaper className="mb-3 h-5 w-5" />
-                  <p className="text-sm font-medium">Cobertura local</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-white/12 bg-black/10 p-4 backdrop-blur-sm">
-                  <CalendarDays className="mb-3 h-5 w-5" />
-                  <p className="text-sm font-medium">Agenda ativa</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-white/12 bg-black/10 p-4 backdrop-blur-sm">
-                  <MapPinned className="mb-3 h-5 w-5" />
-                  <p className="text-sm font-medium">Mapa interativo</p>
-                </div>
+                {HERO_QUICK_LINKS.map(({ icon: Icon, label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="rounded-[1.25rem] border border-white/20 bg-black/10 p-4 backdrop-blur-sm transition-colors hover:border-white/45 hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  >
+                    <Icon className="mb-3 h-5 w-5" />
+                    <p className="text-sm font-medium">{label}</p>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>

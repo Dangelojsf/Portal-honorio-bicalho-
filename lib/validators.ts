@@ -73,3 +73,32 @@ export const siteSettingsSchema = z.object({
   historyDescription: z.string().min(20),
   historyImage: requiredImage
 });
+
+export const moderatorSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().min(3),
+    email: z.string().email(),
+    password: z.string().optional().or(z.literal("")),
+    isActive: z.boolean().default(true)
+  })
+  .superRefine((value, context) => {
+    if (!value.id && !value.password) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["password"],
+        message: "Senha obrigatoria para novo moderador"
+      });
+    }
+
+    if (value.password && value.password.length > 0 && value.password.length < 6) {
+      context.addIssue({
+        code: z.ZodIssueCode.too_small,
+        path: ["password"],
+        minimum: 6,
+        inclusive: true,
+        type: "string",
+        message: "Senha deve ter pelo menos 6 caracteres"
+      });
+    }
+  });
